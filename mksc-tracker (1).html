@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MKSC Technical Site Audit — Milestone Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#16231F;
+    --ink-soft:#4A564E;
+    --paper:#EEEAE0;
+    --panel:#F8F6EF;
+    --white:#FFFFFF;
+    --line:#D9D3C2;
+    --teal:#1F4D46;
+    --teal-deep:#122F2A;
+    --ochre:#B07E33;
+    --ochre-soft:#EADFC5;
+    --critical:#9C3B2E;
+    --critical-bg:#F3E1DC;
+    --high:#B4772A;
+    --high-bg:#F3E5CC;
+    --medium:#6E6229;
+    --medium-bg:#EDE8C9;
+    --low:#4E6357;
+    --low-bg:#DFE6DF;
+    --shadow: 0 2px 14px rgba(22,35,31,0.08);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--paper);color:var(--ink);font-family:'IBM Plex Sans',sans-serif;}
+  body{min-height:100vh;}
+  .app{display:flex;min-height:100vh;}
+
+  /* ---- Rail nav ---- */
+  .rail{
+    width:74px;flex-shrink:0;background:var(--teal-deep);color:#E9E4D4;
+    display:flex;flex-direction:column;align-items:center;padding:20px 0;gap:6px;
+  }
+  .rail-mark{
+    font-family:'Fraunces',serif;font-weight:600;font-size:22px;letter-spacing:0.02em;
+    color:var(--ochre-soft);margin-bottom:28px;writing-mode:vertical-rl;text-orientation:mixed;
+  }
+  .rail-btn{
+    width:52px;height:52px;border-radius:3px;border:none;background:transparent;color:#B9C4BC;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:19px;
+    transition:background .15s ease, color .15s ease;position:relative;
+  }
+  .rail-btn:hover{background:rgba(255,255,255,0.06);color:#F2EFE4;}
+  .rail-btn.active{background:rgba(234,223,197,0.14);color:var(--ochre-soft);}
+  .rail-btn.active::before{
+    content:'';position:absolute;left:-20px;top:8px;bottom:8px;width:3px;background:var(--ochre);border-radius:2px;
+  }
+
+  /* ---- Main ---- */
+  .main{flex:1;min-width:0;display:flex;flex-direction:column;}
+  .topbar{
+    background:var(--white);border-bottom:1px solid var(--line);padding:20px 32px;
+    display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:8px 24px;
+  }
+  .topbar h1{
+    font-family:'Fraunces',serif;font-weight:500;font-size:22px;margin:0;color:var(--teal-deep);
+    letter-spacing:0.01em;
+  }
+  .topbar .client{color:var(--ink-soft);font-size:13.5px;margin-top:3px;}
+  .topbar .meta{text-align:right;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-soft);line-height:1.6;}
+  .sync-flag{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;color:var(--ink-soft);margin-left:10px;}
+  .sync-flag .d{width:6px;height:6px;border-radius:50%;background:#7A9484;}
+
+  .content{padding:28px 32px 60px;flex:1;}
+
+  /* ---- Dashboard ---- */
+  .hero-row{display:flex;gap:20px;flex-wrap:wrap;margin-bottom:22px;}
+  .hero-card{
+    background:var(--teal-deep);color:#EFEAD9;border-radius:4px;padding:26px 28px;
+    flex:1 1 240px;position:relative;overflow:hidden;
+  }
+  .hero-card::after{
+    content:'';position:absolute;right:-30px;top:-30px;width:130px;height:130px;border-radius:50%;
+    background:radial-gradient(circle,rgba(176,126,51,0.35),transparent 70%);
+  }
+  .hero-num{font-family:'Fraunces',serif;font-size:56px;font-weight:500;line-height:1;position:relative;}
+  .hero-label{font-size:12.5px;color:#C7CFC5;margin-top:8px;letter-spacing:.02em;position:relative;}
+  .stat-mini-grid{display:flex;gap:14px;flex:2 1 420px;flex-wrap:wrap;}
+  .stat-mini{
+    background:var(--white);border:1px solid var(--line);border-radius:4px;padding:16px 18px;flex:1 1 100px;
+    cursor:pointer;transition:box-shadow .15s ease, transform .15s ease;
+  }
+  .stat-mini:hover{box-shadow:var(--shadow);transform:translateY(-1px);}
+  .stat-mini .n{font-family:'Fraunces',serif;font-size:28px;font-weight:500;}
+  .stat-mini .l{font-size:11.5px;color:var(--ink-soft);margin-top:4px;}
+  .stat-mini.crit .n{color:var(--critical);}
+  .stat-mini.high .n{color:var(--high);}
+  .stat-mini.med .n{color:var(--medium);}
+  .stat-mini.low .n{color:var(--low);}
+
+  .panel{
+    background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:22px 24px;margin-bottom:20px;
+  }
+  .panel h2{
+    font-family:'Fraunces',serif;font-weight:500;font-size:16px;margin:0 0 16px;color:var(--teal-deep);
+  }
+  .status-bar{display:flex;height:14px;border-radius:2px;overflow:hidden;border:1px solid var(--line);}
+  .status-bar div{height:100%;}
+  .status-legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:12px;font-size:12px;color:var(--ink-soft);}
+  .status-legend span{display:inline-flex;align-items:center;gap:6px;}
+  .dot{width:8px;height:8px;border-radius:50%;display:inline-block;}
+
+  table.team{width:100%;border-collapse:collapse;font-size:13px;}
+  table.team th{
+    text-align:left;font-weight:600;color:var(--ink-soft);font-size:11px;letter-spacing:.02em;
+    padding:6px 10px;border-bottom:1px solid var(--line);
+  }
+  table.team td{padding:9px 10px;border-bottom:1px solid var(--line);}
+  table.team tr:last-child td{border-bottom:none;}
+
+  /* ---- Milestones list ---- */
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px;align-items:center;}
+  .search{
+    flex:1 1 220px;background:var(--white);border:1px solid var(--line);border-radius:4px;padding:9px 12px;
+    font-family:'IBM Plex Sans',sans-serif;font-size:13.5px;color:var(--ink);
+  }
+  .chip{
+    background:var(--white);border:1px solid var(--line);border-radius:20px;padding:6px 14px;font-size:12.5px;
+    cursor:pointer;color:var(--ink-soft);transition:all .15s ease;
+  }
+  .chip.active{background:var(--teal-deep);border-color:var(--teal-deep);color:#EFEAD9;}
+  select.filter-select{
+    background:var(--white);border:1px solid var(--line);border-radius:4px;padding:8px 10px;font-size:12.5px;
+    font-family:'IBM Plex Sans',sans-serif;color:var(--ink);
+  }
+
+  .m-row{
+    display:grid;grid-template-columns:64px 1.5fr 130px 100px 100px 120px 130px;gap:12px;align-items:center;
+    background:var(--white);border:1px solid var(--line);border-radius:4px;padding:13px 16px;margin-bottom:8px;
+    cursor:pointer;transition:box-shadow .15s ease,border-color .15s ease;
+  }
+  .m-row:hover{box-shadow:var(--shadow);border-color:#C4BCA5;}
+  .m-row .id{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink-soft);}
+  .m-row .name{font-size:13.5px;font-weight:500;}
+  .m-row .name .assigned{display:block;font-weight:400;font-size:11.5px;color:var(--ink-soft);margin-top:2px;}
+  .tag{
+    display:inline-block;font-size:10.5px;letter-spacing:.02em;padding:3px 9px;border-radius:20px;font-weight:600;
+    text-align:center;white-space:nowrap;
+  }
+  .tag.CRITICAL{background:var(--critical-bg);color:var(--critical);}
+  .tag.HIGH{background:var(--high-bg);color:var(--high);}
+  .tag.MEDIUM{background:var(--medium-bg);color:var(--medium);}
+  .tag.LOW{background:var(--low-bg);color:var(--low);}
+  .tag.status-Pending{background:#E7E3D6;color:#6B6250;}
+  .tag.status-InProgress{background:#DCE7EC;color:#365A6B;}
+  .tag.status-Complete{background:#DCEADD;color:#33613D;}
+  .tag.status-Delayed{background:var(--critical-bg);color:var(--critical);}
+  .tag.status-OnHold{background:#EDE3F0;color:#6A4C79;}
+  .m-row .due{font-size:12px;color:var(--ink-soft);font-family:'IBM Plex Mono',monospace;}
+  .m-row .bar-wrap{background:#E4DFCF;border-radius:20px;height:7px;overflow:hidden;}
+  .m-row .bar-fill{background:var(--teal);height:100%;}
+  .m-row .pct{font-size:11px;color:var(--ink-soft);margin-top:3px;}
+
+  .empty{text-align:center;padding:50px 20px;color:var(--ink-soft);font-size:13.5px;}
+
+  /* ---- Milestone detail page (mirrors the Excel per-deliverable tab) ---- */
+  .m-page-head{
+    background:var(--teal-deep);color:#EFEAD9;border-radius:4px;padding:22px 28px;margin-bottom:20px;
+    position:relative;overflow:hidden;
+  }
+  .m-page-head::after{
+    content:'';position:absolute;right:-30px;top:-40px;width:150px;height:150px;border-radius:50%;
+    background:radial-gradient(circle,rgba(176,126,51,0.3),transparent 70%);
+  }
+  .m-page-head .breadcrumb{font-size:11.5px;color:#B9C4BC;position:relative;}
+  .m-page-head .breadcrumb span{cursor:pointer;text-decoration:underline;text-underline-offset:2px;}
+  .m-page-head .did{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ochre-soft);margin-top:10px;position:relative;}
+  .m-page-head h2{font-family:'Fraunces',serif;font-weight:500;font-size:24px;margin:4px 0 12px;position:relative;}
+  .m-page-head .sub{font-size:12px;color:#C7CFC5;position:relative;}
+  .m-page-head .tags{margin-top:12px;position:relative;}
+
+  .section h3{
+    font-family:'Fraunces',serif;font-weight:500;font-size:15px;color:var(--teal-deep);margin:0 0 14px;
+    padding-bottom:8px;border-bottom:1px solid var(--line);
+  }
+  .meta-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px 18px;font-size:13px;}
+  .meta-grid .k{color:var(--ink-soft);font-size:11px;margin-bottom:3px;}
+  .meta-grid .v{font-weight:500;}
+  .meta-grid .dep-link{color:var(--teal);cursor:pointer;text-decoration:underline;text-underline-offset:2px;}
+  .desc-text{font-size:13.5px;line-height:1.65;color:var(--ink);background:var(--white);border:1px solid var(--line);border-radius:4px;padding:14px 16px;}
+  .notes-text{font-size:12.5px;line-height:1.6;color:var(--ink-soft);background:var(--ochre-soft);border-radius:4px;padding:11px 14px;margin-top:10px;}
+
+  .field-row{display:flex;gap:10px;margin-bottom:0;flex-wrap:wrap;}
+  .field{flex:1 1 140px;}
+  .field label{display:block;font-size:11px;color:var(--ink-soft);margin-bottom:4px;}
+  .field select, .field input[type=text], .field input[type=date]{
+    width:100%;background:var(--white);border:1px solid var(--line);border-radius:4px;padding:8px 10px;
+    font-family:'IBM Plex Sans',sans-serif;font-size:13px;color:var(--ink);
+  }
+  .slider-row{display:flex;align-items:center;gap:12px;margin-top:6px;}
+  .slider-row input[type=range]{flex:1;accent-color:var(--teal);}
+  .slider-row .val{font-family:'IBM Plex Mono',monospace;font-size:13px;width:42px;text-align:right;}
+
+  /* activity checklist table */
+  table.activity-table{width:100%;border-collapse:collapse;font-size:12.5px;background:var(--white);border:1px solid var(--line);border-radius:4px;overflow:hidden;}
+  table.activity-table th{
+    text-align:left;background:var(--teal-deep);color:#EFEAD9;font-weight:600;font-size:10.5px;letter-spacing:.02em;
+    padding:8px 10px;
+  }
+  table.activity-table td{padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top;}
+  table.activity-table tr:last-child td{border-bottom:none;}
+  table.activity-table input[type=text], table.activity-table input[type=date], table.activity-table select{
+    width:100%;border:1px solid transparent;background:transparent;padding:4px 5px;font-size:12.5px;
+    font-family:'IBM Plex Sans',sans-serif;color:var(--ink);border-radius:3px;
+  }
+  table.activity-table input:hover, table.activity-table select:hover,
+  table.activity-table input:focus, table.activity-table select:focus{border-color:var(--line);background:var(--panel);}
+  table.activity-table .rownum{color:var(--ink-soft);font-family:'IBM Plex Mono',monospace;font-size:11px;text-align:center;}
+  table.activity-table .del-btn{background:none;border:none;color:var(--ink-soft);cursor:pointer;font-size:13px;}
+  .add-activity-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+  .add-activity-row input, .add-activity-row select{
+    background:var(--white);border:1px solid var(--line);border-radius:4px;padding:8px 10px;font-size:12.5px;
+    font-family:'IBM Plex Sans',sans-serif;
+  }
+  .add-activity-row input[type=text]{flex:2 1 160px;}
+  .add-activity-row input[type=date]{flex:1 1 120px;}
+  .add-activity-row select{flex:1 1 110px;}
+
+  .btn{
+    background:var(--teal-deep);color:#EFEAD9;border:none;border-radius:4px;padding:9px 16px;font-size:12.5px;
+    cursor:pointer;font-family:'IBM Plex Sans',sans-serif;font-weight:500;
+  }
+  .btn:hover{background:var(--teal);}
+  .btn.ghost{background:transparent;color:var(--teal-deep);border:1px solid var(--line);}
+  .btn.ghost:hover{background:var(--white);}
+
+  .log-entry{background:var(--white);border:1px solid var(--line);border-radius:4px;padding:11px 13px;margin-bottom:8px;font-size:12.5px;}
+  .log-entry .lmeta{display:flex;justify-content:space-between;color:var(--ink-soft);font-size:11px;margin-bottom:5px;font-family:'IBM Plex Mono',monospace;}
+  .log-entry .action{color:var(--critical);font-size:11px;margin-top:6px;}
+  .log-form{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;}
+  .log-form textarea{
+    grid-column:1/-1;background:var(--white);border:1px solid var(--line);border-radius:4px;padding:9px 11px;
+    font-family:'IBM Plex Sans',sans-serif;font-size:13px;resize:vertical;min-height:54px;
+  }
+  .log-form input{background:var(--white);border:1px solid var(--line);border-radius:4px;padding:8px 10px;font-size:12.5px;font-family:'IBM Plex Sans',sans-serif;}
+
+  .approval-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+
+  .evidence-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;}
+  .evidence-slot{background:var(--white);border:1px dashed var(--line);border-radius:4px;padding:12px;}
+  .evidence-slot .prev{
+    width:100%;height:110px;border-radius:3px;background:var(--panel);display:flex;align-items:center;justify-content:center;
+    color:var(--ink-soft);font-size:11px;overflow:hidden;margin-bottom:8px;border:1px solid var(--line);
+  }
+  .evidence-slot .prev img{width:100%;height:100%;object-fit:cover;}
+  .evidence-slot input{width:100%;margin-bottom:6px;border:1px solid var(--line);border-radius:4px;padding:6px 8px;font-size:12px;font-family:'IBM Plex Sans',sans-serif;}
+
+  .page-footer-nav{display:flex;gap:16px;margin-top:8px;font-size:12.5px;}
+  .page-footer-nav span{color:var(--teal);cursor:pointer;text-decoration:underline;text-underline-offset:2px;}
+  .save-note{font-size:11px;color:var(--ink-soft);margin-top:14px;}
+
+  @media (max-width:760px){
+    .m-row{grid-template-columns:1fr;gap:6px;}
+    .m-row .due, .m-row .bar-wrap{display:none;}
+    .rail{width:56px;}
+    .rail-mark{display:none;}
+    .topbar{padding:16px 18px;}
+    .content{padding:18px 16px 50px;}
+    .meta-grid{grid-template-columns:1fr 1fr;}
+    .approval-grid{grid-template-columns:1fr 1fr;}
+    .evidence-grid{grid-template-columns:1fr;}
+    .log-form{grid-template-columns:1fr;}
+    table.activity-table{display:block;overflow-x:auto;}
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="rail">
+    <div class="rail-mark">MKSC</div>
+    <button class="rail-btn active" data-view="dashboard" title="Dashboard"><div>⌂</div></button>
+    <button class="rail-btn" data-view="milestones" title="Milestones"><div>☰</div></button>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <h1>MKSC Technical Site Audit — Milestone Tracker</h1>
+        <div class="client">Fairmont Mount Kenya Safari Club &nbsp;·&nbsp; Consultant: Omiflo Limited</div>
+      </div>
+      <div class="meta">
+        REF: OMIFLO/FMKSC/AUDIT/2026/001<br>
+        01 Apr 2026 – 31 Mar 2027
+        <span class="sync-flag"><span class="d" id="syncDot"></span><span id="syncLabel">connecting…</span></span>
+      </div>
+    </div>
+
+    <div class="content" id="dashboardView"></div>
+    <div class="content" id="milestonesView" style="display:none;"></div>
+    <div class="content" id="detailView" style="display:none;"></div>
+  </div>
+</div>
+
+<script>
+const MILESTONES = [{"id": "S.04", "name": "Legislation & Compliance", "description": "Obtain NEMA effluent discharge licence; secure WRA abstraction permits for all boreholes; EMCA wetlands compliance for Swamp No 2, 3 & Berrias Swamp; submit annual self-monitoring reports.", "assignedPerson": "Chief Engineer", "department": "Compliance", "priority": "CRITICAL", "plannedStart": "2026-04-01", "plannedEnd": "2026-06-30", "actualCompletion": null, "duration": 90, "completion": 0.0, "dependency": null, "notes": "EMCA Cap.387 legal obligation. TDS exceedances must be disclosed in licence application.", "status": "Pending", "evidenceUploaded": "No"}, {"id": "S.06", "name": "Chemical Profiles Review", "description": "Suspend Drain Wonder; restrict Greasestrip Plus; obtain renewed C2C for Oasis Pro; conduct phosphate substitution review for Solid Hero; implement chemical SOP and COSHH training.", "assignedPerson": "Executive Housekeeper", "department": "Operations", "priority": "CRITICAL", "plannedStart": "2026-04-01", "plannedEnd": "2026-06-30", "actualCompletion": null, "duration": 90, "completion": 0.0, "dependency": null, "notes": "Oasis Pro C2C cert expired 06 Mar 2026. Solid Hero ≥30% phosphates — eutrophication driver.", "status": "Pending", "evidenceUploaded": "No"}, {"id": "S.08", "name": "Site Infrastructure Remediation", "description": "Correct GT-2 outlet pipe; restore GT-1 depth; establish licensed FOG disposal contract; commission groundwater survey; design horse stable septic system; full Phase 2 Reed Bed RBS-1 reconstruction.", "assignedPerson": "Omiflo Limited", "department": "Engineering", "priority": "CRITICAL", "plannedStart": "2026-04-01", "plannedEnd": "2026-09-30", "actualCompletion": null, "duration": 182, "completion": 0.0, "dependency": "S.05", "notes": "GT-1 operating at 50% design volume. Reed bed at 25× design hydraulic loading.", "status": "In Progress", "evidenceUploaded": "No"}, {"id": "S.09", "name": "Lagoon System Remediation", "description": "Inspect Lagoon 2 seepage; clear water pennywort; install erosion control on Lagoons 4–7; commission embankment stability report; design desiltation programme; treat Lagoon 1 algal bloom after upstream controls.", "assignedPerson": "Omiflo Limited", "department": "Engineering", "priority": "CRITICAL", "plannedStart": "2026-04-01", "plannedEnd": "2026-09-30", "actualCompletion": null, "duration": 182, "completion": 0.05, "dependency": "S.06", "notes": "Lagoon 2 seepage = piping failure risk. Active bank caving on Lagoons 4,5,6,7.", "status": "In Progress", "evidenceUploaded": "No"}, {"id": "S.10", "name": "Potable Water Supply Treatment", "description": "Install defluoridation & iron removal system for deep borehole; commission full chlorination system audit; install chlorine dosing unit at storage tank; install UV at ice maker; monitor Nawasco nitrate quarterly.", "assignedPerson": "Chief Engineer", "department": "Engineering", "priority": "CRITICAL", "plannedStart": "2026-04-01", "plannedEnd": "2026-06-30", "actualCompletion": null, "duration": 90, "completion": 0.0, "dependency": null, "notes": "Fluoride 1.49–1.95 mg/L; Iron 0.30–0.46 mg/L. 11 of 16 sampling events below minimum chlorine.", "status": "Pending", "evidenceUploaded": "No"}, {"id": "S.12", "name": "Environmental Water Bodies & Effluent", "description": "WILDLIFE EMERGENCY: Identify & isolate failing septic discharging to Swamp No 3; resample Pond 7 BOD; repair horse stable waste system; install GMS House aerator; develop TDS reduction strategy.", "assignedPerson": "Chief Engineer", "department": "Environmental", "priority": "CRITICAL", "plannedStart": "2026-04-01", "plannedEnd": "2026-09-30", "actualCompletion": null, "duration": 182, "completion": 0.0, "dependency": null, "notes": "WILDLIFE EMERGENCY — 38,000 CFU/250ml coliform in Swamp No 3. Big game drinking risk.", "status": "Pending", "evidenceUploaded": "No"}, {"id": "S.PR01", "name": "Public Health & Site Safety", "description": "Install temporary barriers at all 9 pond perimeters; place warning signs (English & Swahili); brief all staff; prevent stable animal access to Swamp No 2; commission fencing design; install permanent fencing.", "assignedPerson": "General Manager", "department": "Safety", "priority": "CRITICAL", "plannedStart": "2026-04-01", "plannedEnd": "2026-09-30", "actualCompletion": null, "duration": 182, "completion": 0.0, "dependency": null, "notes": "Ponds accessible to guests, staff & wildlife with NO barriers or warning signs.", "status": "Pending", "evidenceUploaded": "No"}, {"id": "S.PR02", "name": "Annual Environmental Audit Compliance", "description": "Confirm NEMA audit submission status; appoint NEMA-registered lead expert; submit Phase 1 audit to NEMA; initiate EMP preparation; complete full annual Environmental Audit with Phase 2 findings.", "assignedPerson": "General Manager", "department": "Compliance", "priority": "CRITICAL", "plannedStart": "2026-04-01", "plannedEnd": "2026-09-30", "actualCompletion": null, "duration": 182, "completion": 0.2, "dependency": null, "notes": "EIA & Audit Regulations 2003 — Section 31(1) annual obligation. Phase 1 audit = baseline for 2026.", "status": "In Progress", "evidenceUploaded": "No"}, {"id": "S.PR03", "name": "Site-Wide Wastewater Assessment", "description": "Commission site-wide drainage survey; map all ~12–13 septic tanks; install sub-meters on accommodation clusters; inspect and desludge all septic tanks; sample effluent quality at outlets.", "assignedPerson": "Omiflo Limited", "department": "Engineering", "priority": "CRITICAL", "plannedStart": "2026-04-01", "plannedEnd": "2026-12-31", "actualCompletion": null, "duration": 274, "completion": 0.0, "dependency": "S.PR05", "notes": "330–600 m³/month through 12–13 uninspected septic tanks. None assessed in Phase 1.", "status": "Pending", "evidenceUploaded": "No"}, {"id": "S.PR04", "name": "Soak Pit Compliance", "description": "Notify NEMA of compromised septic/soak pit conditions; install 3 groundwater monitoring boreholes; commence septic restoration (priority: kitchen ST-1); conduct first groundwater sampling; percolation testing.", "assignedPerson": "Chief Engineer", "department": "Environmental", "priority": "CRITICAL", "plannedStart": "2026-04-01", "plannedEnd": "2026-09-30", "actualCompletion": null, "duration": 182, "completion": 0.0, "dependency": "S.PR03", "notes": "EMCA Cap.387 — discharge to ground = discharge to environment. HIGH to CRITICAL groundwater risk.", "status": "Pending", "evidenceUploaded": "No"}, {"id": "S.03", "name": "Surrounding Environment Protection", "description": "Install permanent Likii River monitoring markers; submit quarterly WRA river monitoring data; establish joint monitoring protocol with neighbouring Conservancy & MKWC; adopt precautionary effluent standards.", "assignedPerson": "Environmental Officer", "department": "Environmental", "priority": "HIGH", "plannedStart": "2026-04-01", "plannedEnd": "2026-06-30", "actualCompletion": null, "duration": 90, "completion": 0.0, "dependency": null, "notes": "Ewaso Ng'iro = protected international river system. Mount Kenya UNESCO Buffer Zone proximity.", "status": "Pending", "evidenceUploaded": "No"}, {"id": "S.05", "name": "ADF Facility Flow Profiles", "description": "Install 6mm SS inlet screen at canteen grease trap; install laundry lint trap & grease interceptor; commission hydraulic capacity review; install inline flow meters at all discharge points.", "assignedPerson": "Chief Engineer", "department": "Engineering", "priority": "HIGH", "plannedStart": "2026-04-01", "plannedEnd": "2026-09-30", "actualCompletion": null, "duration": 182, "completion": 0.0, "dependency": null, "notes": "Laundry discharges 290 m³/month directly to reed bed — zero pre-treatment. Combined load 641 m³/month.", "status": "Pending", "evidenceUploaded": "No"}, {"id": "S.11", "name": "Swimming Pool & Recreation", "description": "Begin cyanuric acid stabiliser dosing (target 30–50 ppm); implement twice-daily chemistry log; install automated dosing system; audit pool backwash disposal pathway; manage alkalinity with sodium bicarbonate.", "assignedPerson": "Facilities Manager", "department": "Facilities", "priority": "HIGH", "plannedStart": "2026-04-01", "plannedEnd": "2026-06-30", "actualCompletion": null, "duration": 90, "completion": 0.1, "dependency": null, "notes": "Total alkalinity fell to 3 ppm (Oct 2025). No cyanuric acid detected. Free Cl₂ reached 1.9 ppm.", "status": "In Progress", "evidenceUploaded": "No"}, {"id": "S.PR05", "name": "Site-Wide ADF & Design Flow", "description": "Identify & install sub-meters on all unmetered accommodation clusters; request 3 years historical occupancy data; conduct preliminary seasonal correction; establish confirmed Min/Avg/Peak ADF values after 12 months.", "assignedPerson": "Chief Engineer", "department": "Engineering", "priority": "HIGH", "plannedStart": "2026-04-01", "plannedEnd": "2027-03-31", "actualCompletion": null, "duration": 364, "completion": 0.0, "dependency": null, "notes": "Estimated site-wide flow 970–1,240 m³/month vs confirmed Phase 1 total of 641 m³/month.", "status": "Pending", "evidenceUploaded": "No"}, {"id": "S.PR06", "name": "Treatment Pond Design Capacity Analysis", "description": "Commission desktop capacity analysis using Phase 1 lagoon dimension data; use 1,200 m³/month upper-bound design flow; update analysis with full ADF data post sub-metering; revise Phase 2 scope accordingly.", "assignedPerson": "Omiflo Limited", "department": "Engineering", "priority": "HIGH", "plannedStart": "2026-05-01", "plannedEnd": "2027-03-31", "actualCompletion": null, "duration": 334, "completion": 0.0, "dependency": "S.PR05", "notes": "No design capacity analysis completed in Phase 1. Fundamental gap before Phase 2 finalisation.", "status": "Pending", "evidenceUploaded": "No"}, {"id": "S.PR08", "name": "Groundwater Monitoring Programme", "description": "Commission hydrogeological desk study; install minimum 3 monitoring boreholes (upgradient, downgradient, lagoon-to-river); conduct first-round sampling; establish quarterly monitoring programme; report to NEMA annually.", "assignedPerson": "Omiflo Limited", "department": "Environmental", "priority": "HIGH", "plannedStart": "2026-05-01", "plannedEnd": "2026-12-31", "actualCompletion": null, "duration": 244, "completion": 0.0, "dependency": "S.PR04", "notes": "No baseline groundwater data exists. Nitrate highly mobile — can reach Likii River in days to weeks.", "status": "Pending", "evidenceUploaded": "No"}, {"id": "S.PR09", "name": "Stormwater Mapping & Management", "description": "Physically trace William Holden septic connection to Lagoon 3; conduct walkover survey during rainfall; commission stormwater catchment mapping; produce stormwater drainage map; design Lagoon 3 overflow management.", "assignedPerson": "Omiflo Limited", "department": "Engineering", "priority": "HIGH", "plannedStart": "2026-05-01", "plannedEnd": "2026-12-31", "actualCompletion": null, "duration": 244, "completion": 0.0, "dependency": null, "notes": "Lagoon 3 stormwater overflow pathway currently unmanaged. WH septic connection suspected but unconfirmed.", "status": "Pending", "evidenceUploaded": "No"}, {"id": "S.01", "name": "Board-Level Reporting & EMP", "description": "Brief site management on all CRITICAL findings; assign named responsible persons; prepare Environmental Management Plan referencing EMCA Cap.387; share findings with Fairmont Global Sustainability team.", "assignedPerson": "General Manager", "department": "Management", "priority": "MEDIUM", "plannedStart": "2026-04-01", "plannedEnd": "2026-06-30", "actualCompletion": null, "duration": 90, "completion": 0.3, "dependency": null, "notes": "Key findings table to be presented at board/senior management level as priority action register.", "status": "In Progress", "evidenceUploaded": "No"}, {"id": "S.07", "name": "Enzyme Treatment (BioCastle NatiCap)", "description": "Desludge GT-1 and ST-1 before enzyme reassessment; reintroduce NatiCap at GT-1 after restoration; deploy NatiCap in final effluent pond stage; monitor BOD & FOG monthly for first 3 months post-restoration.", "assignedPerson": "Chief Engineer", "department": "Operations", "priority": "MEDIUM", "plannedStart": "2026-06-01", "plannedEnd": "2026-09-30", "actualCompletion": null, "duration": 121, "completion": 0.0, "dependency": "S.08", "notes": "NatiCap cannot compensate for infrastructure failure. Physical desludging must precede enzyme re-evaluation.", "status": "Pending", "evidenceUploaded": "No"}, {"id": "S.PR10", "name": "Water Quality Data Management", "description": "Brief NAWASCO lab on new sample labeling protocol (FMKSC-[YEAR]-[CAMPAIGN]-[NO.]); conduct Campaign 6 with new protocol; perform trend analysis across Campaigns 1–6; maintain 4+ post-Phase 2 campaigns by audit.", "assignedPerson": "Environmental Officer", "department": "Environmental", "priority": "MEDIUM", "plannedStart": "2026-05-01", "plannedEnd": "2026-12-31", "actualCompletion": null, "duration": 244, "completion": 0.0, "dependency": null, "notes": "Inconsistent labeling across 5 Phase 1 campaigns prevents reliable trend analysis.", "status": "Pending", "evidenceUploaded": "No"}, {"id": "S.PR11", "name": "Kitchen FOG Best Practice Training", "description": "Conduct operational observation during full kitchen service; develop Kitchen FOG Management SOP; deliver 30-min training to all kitchen & canteen staff; place laminated SOP cards at all sinks; annual refresher training.", "assignedPerson": "Executive Housekeeper", "department": "Operations", "priority": "MEDIUM", "plannedStart": "2026-05-01", "plannedEnd": "2026-09-30", "actualCompletion": null, "duration": 152, "completion": 0.0, "dependency": "S.08", "notes": "Poor kitchen practices can undo correct grease trap function. SOP to cover: dry wipe, oil disposal, no NaOH to drains.", "status": "Pending", "evidenceUploaded": "No"}, {"id": "S.PR12", "name": "Treated Effluent Reuse & Water Management", "description": "Commission Treated Effluent Reuse Feasibility Study; assess golf course irrigation water consumption; design treated effluent irrigation system; establish separate non-potable distribution line; document reuse volumes in annual audit.", "assignedPerson": "General Manager", "department": "Sustainability", "priority": "MEDIUM", "plannedStart": "2026-07-01", "plannedEnd": "2027-03-31", "actualCompletion": null, "duration": 273, "completion": 0.0, "dependency": "S.09", "notes": "All treated effluent currently discharged to Likii River. No reuse practised. Borehole supply under climate stress.", "status": "Pending", "evidenceUploaded": "No"}, {"id": "S.PR13", "name": "Enzyme Performance Monitoring Protocol", "description": "Establish NatiCap monitoring log per dosing point; take GT-1 inlet/outlet grab samples at next bi-monthly service; run 90-day baseline post GT-1 restoration; assess performance against benchmarks at Day 90.", "assignedPerson": "Environmental Officer", "department": "Operations", "priority": "MEDIUM", "plannedStart": "2026-06-01", "plannedEnd": "2026-12-31", "actualCompletion": null, "duration": 213, "completion": 0.0, "dependency": "S.07", "notes": "Targets: GT-1 outlet ≥60% FOG reduction; ST-1 outlet BOD ≤100 mg/L; Final effluent BOD ≤20 mg/L.", "status": "Pending", "evidenceUploaded": "No"}, {"id": "S.PR14", "name": "Soft Water Borehole Evaluation", "description": "Physically trace laundry cold-water supply pipe to source borehole; measure hardness at laundry machine inlet; confirm hot-water source borehole; install water softener only if hardness confirmed >250 mg/L CaCO₃.", "assignedPerson": "Chief Engineer", "department": "Facilities", "priority": "MEDIUM", "plannedStart": "2026-05-01", "plannedEnd": "2026-09-30", "actualCompletion": null, "duration": 152, "completion": 0.0, "dependency": null, "notes": "Soft borehole hardness 2–100 mg/L (very soft). Deep borehole 450–577 mg/L (very hard). Confirm feed source first.", "status": "Pending", "evidenceUploaded": "No"}, {"id": "S.PR15", "name": "Flow Meter Installation", "description": "Identify existing sub-meter locations; assess data logger retrofit feasibility; install supply-side flow meters at kitchen, laundry & canteen; design & install Parshall flume on laundry outlet channel.", "assignedPerson": "Chief Engineer", "department": "Engineering", "priority": "MEDIUM", "plannedStart": "2026-05-01", "plannedEnd": "2026-09-30", "actualCompletion": null, "duration": 152, "completion": 0.0, "dependency": "S.PR05", "notes": "Gravity flow lines require supply-side metering or flume — standard inline meters not suitable on partial-flow drains.", "status": "Pending", "evidenceUploaded": "No"}, {"id": "S.02", "name": "Ecological Landscaping & Lagoon Aesthetics", "description": "Design floating green filters for Lagoons 1,2,8,9; implement riparian planting programme; develop Lagoon Aesthetic Masterplan; install interpretive signage; develop guest water tour programme.", "assignedPerson": "General Manager", "department": "Sustainability", "priority": "LOW", "plannedStart": "2026-07-01", "plannedEnd": "2026-12-31", "actualCompletion": null, "duration": 183, "completion": 0.0, "dependency": "S.09", "notes": "Commission after upstream infrastructure remediation. Source Typha latifolia & Cyperus papyrus from certified nurseries.", "status": "Pending", "evidenceUploaded": "No"}, {"id": "S.PR16", "name": "Long-Term Technology Review", "description": "Commission technology options assessment as part of Phase 3 planning; evaluate existing rehabilitated pond system against 2–3 alternative technologies; present to FMKSC senior management and Fairmont Global Sustainability team.", "assignedPerson": "General Manager", "department": "Management", "priority": "LOW", "plannedStart": "2027-01-01", "plannedEnd": "2027-06-30", "actualCompletion": null, "duration": 180, "completion": 0.0, "dependency": "S.PR06", "notes": "Phase 2 rehabilitation is correct immediate priority. Technology review = Phase 3 planning horizon.", "status": "Pending", "evidenceUploaded": "No"}, {"id": "S.PR17", "name": "Terminology Update — Treatment Ponds", "description": "Update all internal documentation to use 'Treatment Ponds' / 'Oxidation Ponds'; revise Phase 2 engineering drawings and NEMA/WRA submissions; update FMKSC sustainability page and guest-facing materials.", "assignedPerson": "General Manager", "department": "Compliance", "priority": "LOW", "plannedStart": "2026-05-01", "plannedEnd": "2026-09-30", "actualCompletion": null, "duration": 152, "completion": 0.0, "dependency": null, "notes": "Low-cost change. 'Leach ponds' implies infiltration as purpose — not recognised under Kenyan environmental law.", "status": "Pending", "evidenceUploaded": "No"}];
+
+const STATUSES = ["Pending","In Progress","Complete","Delayed","On Hold"];
+const STATUS_CLASS = { "Pending":"status-Pending", "In Progress":"status-InProgress", "Complete":"status-Complete", "Delayed":"status-Delayed", "On Hold":"status-OnHold" };
+const SIGNOFF_OPTIONS = ["Not Reviewed","Under Review","Approved","Rejected"];
+const PRIORITY_ORDER = { CRITICAL:0, HIGH:1, MEDIUM:2, LOW:3 };
+
+const FIREBASE_URL = "https://mksc-tracker-default-rtdb.europe-west1.firebasedatabase.app";
+const DB_PATH = "overrides_v2";
+
+let overrides = {};
+let activeFilter = "ALL";
+let statusFilter = "ALL";
+let searchTerm = "";
+let currentId = null;
+let currentView = "dashboard";
+let applyingRemote = false;
+
+function fmtDate(d){
+  if(!d) return "—";
+  const dt = new Date(d+"T00:00:00");
+  if(isNaN(dt)) return d;
+  return dt.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+}
+function pct(v){ return Math.round((v||0)*100); }
+
+function defaultOverride(m){
+  return {
+    status: m.status,
+    completion: m.completion || 0,
+    activities: [],
+    log: [],
+    approval: { reviewedBy:"", approvedBy:"", dateApproved:"", signOff:"Not Reviewed" },
+    evidence: [ {url:"",caption:""}, {url:"",caption:""}, {url:"",caption:""}, {url:"",caption:""} ]
+  };
+}
+
+function ensureDefaults(){
+  MILESTONES.forEach(m=>{
+    if(!overrides[m.id]) overrides[m.id] = defaultOverride(m);
+    const o = overrides[m.id];
+    if(!o.activities) o.activities = [];
+    if(!o.log) o.log = [];
+    if(!o.approval) o.approval = { reviewedBy:"", approvedBy:"", dateApproved:"", signOff:"Not Reviewed" };
+    if(!o.evidence) o.evidence = [ {url:"",caption:""}, {url:"",caption:""}, {url:"",caption:""}, {url:"",caption:""} ];
+  });
+}
+
+function setSyncStatus(connected){
+  const dot = document.getElementById('syncDot');
+  const label = document.getElementById('syncLabel');
+  if(!dot || !label) return;
+  dot.style.background = connected ? '#7A9484' : '#B4772A';
+  label.textContent = connected ? 'live · shared workspace' : 'offline · viewing local copy';
+}
+
+async function loadOverrides(){
+  try{
+    const res = await fetch(`${FIREBASE_URL}/${DB_PATH}.json`);
+    const data = await res.json();
+    overrides = data || {};
+    setSyncStatus(true);
+  }catch(e){
+    console.error('Load from Firebase failed', e);
+    overrides = {};
+    setSyncStatus(false);
+  }
+  ensureDefaults();
+}
+
+let saveTimer = null;
+function persist(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async ()=>{
+    try{
+      applyingRemote = true;
+      await fetch(`${FIREBASE_URL}/${DB_PATH}.json`, {
+        method: 'PUT',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify(overrides)
+      });
+      setSyncStatus(true);
+    }catch(e){
+      console.error('Save to Firebase failed', e);
+      setSyncStatus(false);
+    }finally{
+      setTimeout(()=>{ applyingRemote = false; }, 200);
+    }
+  }, 400);
+}
+
+function reRenderActive(){
+  if(currentView==='dashboard') renderDashboard();
+  else if(currentView==='milestones') renderRows();
+  else if(currentView==='detail') renderDetailView();
+}
+
+function startLiveSync(){
+  try{
+    const es = new EventSource(`${FIREBASE_URL}/${DB_PATH}.json`);
+    es.addEventListener('put', (e)=>{
+      if(applyingRemote) return;
+      try{
+        const msg = JSON.parse(e.data);
+        if(msg.path === '/'){
+          overrides = msg.data || {};
+          ensureDefaults();
+          reRenderActive();
+          setSyncStatus(true);
+        }
+      }catch(err){ console.error('Live sync parse error', err); }
+    });
+    es.onerror = ()=> setSyncStatus(false);
+    es.onopen = ()=> setSyncStatus(true);
+  }catch(e){
+    console.error('Live sync unavailable', e);
+  }
+}
+
+function getState(m){ return overrides[m.id] || defaultOverride(m); }
+
+// ---------- Dashboard ----------
+function renderDashboard(){
+  const el = document.getElementById('dashboardView');
+  const total = MILESTONES.length;
+  const counts = { "Pending":0,"In Progress":0,"Complete":0,"Delayed":0,"On Hold":0 };
+  const prioCounts = { CRITICAL:0, HIGH:0, MEDIUM:0, LOW:0 };
+  let sumCompletion = 0;
+  MILESTONES.forEach(m=>{
+    const s = getState(m);
+    counts[s.status] = (counts[s.status]||0) + 1;
+    prioCounts[m.priority] = (prioCounts[m.priority]||0) + 1;
+    sumCompletion += (s.completion||0);
+  });
+  const overallPct = total ? Math.round((sumCompletion/total)*100) : 0;
+
+  const teamMap = {};
+  MILESTONES.forEach(m=>{
+    const p = m.assignedPerson || "Unassigned";
+    if(!teamMap[p]) teamMap[p] = {assigned:0, complete:0, inprogress:0, pending:0, delayed:0};
+    teamMap[p].assigned++;
+    const s = getState(m).status;
+    if(s==="Complete") teamMap[p].complete++;
+    else if(s==="In Progress") teamMap[p].inprogress++;
+    else if(s==="Delayed") teamMap[p].delayed++;
+    else teamMap[p].pending++;
+  });
+
+  const statusColors = { "Pending":"#C9C2AC","In Progress":"#5D8AA0","Complete":"#5D9C6C","Delayed":"#9C3B2E","On Hold":"#8C6A99" };
+  let barHtml = '';
+  STATUSES.forEach(s=>{
+    const c = counts[s]||0;
+    const w = total ? (c/total*100) : 0;
+    if(w>0) barHtml += `<div style="width:${w}%;background:${statusColors[s]}"></div>`;
+  });
+  let legendHtml = STATUSES.map(s=>`<span><span class="dot" style="background:${statusColors[s]}"></span>${s} (${counts[s]||0})</span>`).join('');
+
+  let prioHtml = '';
+  ['CRITICAL','HIGH','MEDIUM','LOW'].forEach(p=>{
+    prioHtml += `<div class="stat-mini ${p.toLowerCase()==='critical'?'crit':p.toLowerCase()==='high'?'high':p.toLowerCase()==='medium'?'med':'low'}" data-prio="${p}">
+      <div class="n">${prioCounts[p]||0}</div><div class="l">${p} priority</div></div>`;
+  });
+
+  let teamRows = Object.entries(teamMap).map(([name,d])=>{
+    const cpct = d.assigned ? Math.round(d.complete/d.assigned*100) : 0;
+    return `<tr><td>${name}</td><td>${d.assigned}</td><td>${d.complete}</td><td>${d.inprogress}</td><td>${d.pending}</td><td>${d.delayed}</td><td>${cpct}%</td></tr>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="hero-row">
+      <div class="hero-card">
+        <div class="hero-num">${overallPct}%</div>
+        <div class="hero-label">Overall project completion · ${total} milestones</div>
+      </div>
+      <div class="stat-mini-grid">${prioHtml}</div>
+    </div>
+    <div class="panel">
+      <h2>Status overview</h2>
+      <div class="status-bar">${barHtml}</div>
+      <div class="status-legend">${legendHtml}</div>
+    </div>
+    <div class="panel">
+      <h2>Team performance</h2>
+      <table class="team">
+        <thead><tr><th>Person / Team</th><th>Assigned</th><th>Complete</th><th>In progress</th><th>Pending</th><th>Delayed</th><th>Completion</th></tr></thead>
+        <tbody>${teamRows}</tbody>
+      </table>
+    </div>
+  `;
+  el.querySelectorAll('.stat-mini[data-prio]').forEach(node=>{
+    node.addEventListener('click', ()=>{ activeFilter = node.getAttribute('data-prio'); switchView('milestones'); });
+  });
+}
+
+// ---------- Milestones list ----------
+function renderMilestonesView(){
+  const el = document.getElementById('milestonesView');
+  el.innerHTML = `
+    <div class="toolbar">
+      <input class="search" id="searchBox" type="text" placeholder="Search milestones, deliverables, people…" value="${searchTerm}">
+      <div class="chip ${activeFilter==='ALL'?'active':''}" data-p="ALL">All priority</div>
+      <div class="chip ${activeFilter==='CRITICAL'?'active':''}" data-p="CRITICAL">Critical</div>
+      <div class="chip ${activeFilter==='HIGH'?'active':''}" data-p="HIGH">High</div>
+      <div class="chip ${activeFilter==='MEDIUM'?'active':''}" data-p="MEDIUM">Medium</div>
+      <div class="chip ${activeFilter==='LOW'?'active':''}" data-p="LOW">Low</div>
+      <select class="filter-select" id="statusSelect">
+        <option value="ALL">All statuses</option>
+        ${STATUSES.map(s=>`<option value="${s}" ${statusFilter===s?'selected':''}>${s}</option>`).join('')}
+      </select>
+    </div>
+    <div id="rowsWrap"></div>
+  `;
+  document.getElementById('searchBox').addEventListener('input', (e)=>{ searchTerm = e.target.value; renderRows(); });
+  document.getElementById('statusSelect').addEventListener('change', (e)=>{ statusFilter = e.target.value; renderRows(); });
+  el.querySelectorAll('.chip').forEach(c=>{
+    c.addEventListener('click', ()=>{ activeFilter = c.getAttribute('data-p'); renderMilestonesView(); });
+  });
+  renderRows();
+}
+
+function renderRows(){
+  const wrap = document.getElementById('rowsWrap');
+  if(!wrap) return;
+  let list = MILESTONES.slice();
+  if(activeFilter !== 'ALL') list = list.filter(m=>m.priority===activeFilter);
+  if(statusFilter !== 'ALL') list = list.filter(m=>getState(m).status===statusFilter);
+  if(searchTerm.trim()){
+    const q = searchTerm.toLowerCase();
+    list = list.filter(m => (m.name+" "+m.description+" "+(m.assignedPerson||"")+" "+m.id).toLowerCase().includes(q));
+  }
+  list.sort((a,b)=> PRIORITY_ORDER[a.priority]-PRIORITY_ORDER[b.priority] || new Date(a.plannedEnd)-new Date(b.plannedEnd));
+
+  if(list.length===0){
+    wrap.innerHTML = `<div class="empty">No milestones match these filters. Try clearing the search or filters.</div>`;
+    return;
+  }
+  wrap.innerHTML = list.map(m=>{
+    const s = getState(m);
+    const p = pct(s.completion);
+    return `
+    <div class="m-row" data-id="${m.id}">
+      <div class="id">${m.id}</div>
+      <div class="name">${m.name}<span class="assigned">${m.assignedPerson||''} · ${m.department||''}</span></div>
+      <div><span class="tag ${m.priority}">${m.priority}</span></div>
+      <div><span class="tag ${STATUS_CLASS[s.status]}">${s.status}</span></div>
+      <div class="due">${fmtDate(m.plannedEnd)}</div>
+      <div>
+        <div class="bar-wrap"><div class="bar-fill" style="width:${p}%"></div></div>
+        <div class="pct">${p}% complete</div>
+      </div>
+    </div>`;
+  }).join('');
+  wrap.querySelectorAll('.m-row').forEach(row=>{
+    row.addEventListener('click', ()=> openDetail(row.getAttribute('data-id')));
+  });
+}
+
+// ---------- Detail page (mirrors the Excel per-milestone tab) ----------
+function openDetail(id){
+  currentId = id;
+  switchView('detail', true);
+}
+
+function renderDetailView(){
+  const el = document.getElementById('detailView');
+  const m = MILESTONES.find(x=>x.id===currentId);
+  if(!m){ el.innerHTML = `<div class="empty">Milestone not found.</div>`; return; }
+  const s = getState(m);
+
+  el.innerHTML = `
+    <div class="m-page-head">
+      <div class="breadcrumb"><span data-nav="dashboard">Dashboard</span> &nbsp;/&nbsp; <span data-nav="milestones">Master Tracker</span> &nbsp;/&nbsp; ${m.id}</div>
+      <div class="did">Fairmont Mount Kenya Safari Club · Omiflo Limited · March 2026</div>
+      <h2>${m.id} — ${m.name}</h2>
+      <div class="tags">
+        <span class="tag ${m.priority}">${m.priority}</span>
+        <span class="tag ${STATUS_CLASS[s.status]}" id="headStatusTag" style="margin-left:6px;">${s.status}</span>
+      </div>
+    </div>
+
+    <div class="panel section">
+      <h3>Deliverable details</h3>
+      <div class="meta-grid">
+        <div><div class="k">Responsible person</div><div class="v">${m.assignedPerson||'—'}</div></div>
+        <div><div class="k">Department</div><div class="v">${m.department||'—'}</div></div>
+        <div><div class="k">Planned start</div><div class="v">${fmtDate(m.plannedStart)}</div></div>
+        <div><div class="k">Planned completion</div><div class="v">${fmtDate(m.plannedEnd)}</div></div>
+        <div><div class="k">Duration</div><div class="v">${m.duration||'—'} days</div></div>
+        <div><div class="k">Dependency</div><div class="v">${m.dependency ? `<span class="dep-link" id="depLink">${m.dependency}</span>` : 'None'}</div></div>
+        <div style="grid-column:span 2;">
+          <div class="k">Status</div>
+          <select id="statusInput" style="margin-top:2px;">
+            ${STATUSES.map(st=>`<option value="${st}" ${s.status===st?'selected':''}>${st}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div class="slider-row">
+        <input type="range" id="completionInput" min="0" max="100" value="${pct(s.completion)}">
+        <span class="val" id="completionVal">${pct(s.completion)}%</span>
+      </div>
+    </div>
+
+    <div class="panel section">
+      <h3>Description / scope</h3>
+      <div class="desc-text">${m.description}</div>
+      ${m.notes ? `<div class="notes-text"><strong>Field notes:</strong> ${m.notes}</div>` : ''}
+    </div>
+
+    <div class="panel section">
+      <h3>Activity checklist</h3>
+      <table class="activity-table">
+        <thead><tr><th style="width:32px;">#</th><th>Activity / Sub-task</th><th style="width:130px;">Responsible</th><th style="width:120px;">Due date</th><th style="width:110px;">Status</th><th>Notes</th><th style="width:24px;"></th></tr></thead>
+        <tbody id="activityRows"></tbody>
+      </table>
+      <div class="add-activity-row">
+        <input type="text" id="newActText" placeholder="Activity / sub-task">
+        <input type="text" id="newActResp" placeholder="Responsible">
+        <input type="date" id="newActDue">
+        <select id="newActStatus">${STATUSES.map(st=>`<option value="${st}">${st}</option>`).join('')}</select>
+        <input type="text" id="newActNotes" placeholder="Notes">
+        <button class="btn" id="addActBtn">Add activity</button>
+      </div>
+    </div>
+
+    <div class="panel section">
+      <h3>Comments / logbook</h3>
+      <div id="logItems"></div>
+      <div class="log-form">
+        <input type="text" id="logBy" placeholder="Your name">
+        <input type="date" id="logDate" value="${new Date().toISOString().slice(0,10)}">
+        <input type="text" id="logAction" placeholder="Action required (optional)">
+        <textarea id="logEntry" placeholder="Log entry…"></textarea>
+      </div>
+      <button class="btn" id="addLogBtn">Add entry</button>
+    </div>
+
+    <div class="panel section">
+      <h3>Approval section</h3>
+      <div class="approval-grid">
+        <div class="field"><label>Reviewed by</label><input type="text" id="apReviewed" value="${s.approval.reviewedBy||''}"></div>
+        <div class="field"><label>Approved by</label><input type="text" id="apApproved" value="${s.approval.approvedBy||''}"></div>
+        <div class="field"><label>Date approved</label><input type="date" id="apDate" value="${s.approval.dateApproved||''}"></div>
+        <div class="field"><label>Sign-off status</label>
+          <select id="apSignoff">${SIGNOFF_OPTIONS.map(o=>`<option value="${o}" ${s.approval.signOff===o?'selected':''}>${o}</option>`).join('')}</select>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel section">
+      <h3>Image / evidence section</h3>
+      <div class="evidence-grid" id="evidenceGrid"></div>
+      <div class="save-note">Evidence is stored as a link (photo folder, shared drive, or hosted image) — this tool can't accept direct file uploads.</div>
+    </div>
+
+    <div class="page-footer-nav">
+      <span data-nav="dashboard">⬅ Back to Dashboard</span>
+      <span data-nav="milestones">📋 Master Tracker</span>
+    </div>
+    <div class="save-note">Changes save automatically and are shared with the whole team viewing this tracker.</div>
+  `;
+
+  renderActivities();
+  renderLog();
+  renderEvidence();
+
+  el.querySelectorAll('[data-nav]').forEach(n=>{
+    n.addEventListener('click', ()=> switchView(n.getAttribute('data-nav')));
+  });
+  const depLink = document.getElementById('depLink');
+  if(depLink){
+    depLink.addEventListener('click', ()=>{
+      if(MILESTONES.find(x=>x.id===m.dependency)){ currentId = m.dependency; renderDetailView(); }
+    });
+  }
+
+  document.getElementById('statusInput').addEventListener('change', (e)=>{
+    s.status = e.target.value;
+    document.getElementById('headStatusTag').className = `tag ${STATUS_CLASS[e.target.value]}`;
+    document.getElementById('headStatusTag').textContent = e.target.value;
+    persist();
+  });
+  document.getElementById('completionInput').addEventListener('input', (e)=>{
+    document.getElementById('completionVal').textContent = e.target.value+'%';
+  });
+  document.getElementById('completionInput').addEventListener('change', (e)=>{
+    s.completion = parseInt(e.target.value,10)/100;
+    persist();
+  });
+
+  document.getElementById('addActBtn').addEventListener('click', ()=>{
+    const text = document.getElementById('newActText').value.trim();
+    if(!text) return;
+    s.activities.push({
+      text,
+      responsible: document.getElementById('newActResp').value.trim(),
+      dueDate: document.getElementById('newActDue').value,
+      status: document.getElementById('newActStatus').value,
+      notes: document.getElementById('newActNotes').value.trim()
+    });
+    document.getElementById('newActText').value='';
+    document.getElementById('newActResp').value='';
+    document.getElementById('newActDue').value='';
+    document.getElementById('newActNotes').value='';
+    renderActivities();
+    persist();
+  });
+
+  document.getElementById('addLogBtn').addEventListener('click', ()=>{
+    const entry = document.getElementById('logEntry').value.trim();
+    if(!entry) return;
+    s.log.unshift({
+      date: document.getElementById('logDate').value || new Date().toISOString().slice(0,10),
+      by: document.getElementById('logBy').value.trim() || 'Unspecified',
+      entry,
+      action: document.getElementById('logAction').value.trim()
+    });
+    document.getElementById('logEntry').value='';
+    document.getElementById('logAction').value='';
+    renderLog();
+    persist();
+  });
+
+  ['apReviewed','apApproved','apDate','apSignoff'].forEach(id=>{
+    document.getElementById(id).addEventListener('change', (e)=>{
+      const map = { apReviewed:'reviewedBy', apApproved:'approvedBy', apDate:'dateApproved', apSignoff:'signOff' };
+      s.approval[map[id]] = e.target.value;
+      persist();
+    });
+  });
+}
+
+function renderActivities(){
+  const m = MILESTONES.find(x=>x.id===currentId);
+  const s = getState(m);
+  const tbody = document.getElementById('activityRows');
+  if(!tbody) return;
+  if(s.activities.length===0){
+    tbody.innerHTML = `<tr><td colspan="7" style="color:var(--ink-soft);text-align:center;padding:14px;">No sub-tasks logged yet — add the first one below.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = s.activities.map((a,i)=>`
+    <tr>
+      <td class="rownum">${i+1}</td>
+      <td><input type="text" data-i="${i}" data-f="text" value="${a.text||''}"></td>
+      <td><input type="text" data-i="${i}" data-f="responsible" value="${a.responsible||''}"></td>
+      <td><input type="date" data-i="${i}" data-f="dueDate" value="${a.dueDate||''}"></td>
+      <td><select data-i="${i}" data-f="status">${STATUSES.map(st=>`<option value="${st}" ${a.status===st?'selected':''}>${st}</option>`).join('')}</select></td>
+      <td><input type="text" data-i="${i}" data-f="notes" value="${a.notes||''}"></td>
+      <td><button class="del-btn" data-i="${i}">✕</button></td>
+    </tr>`).join('');
+  tbody.querySelectorAll('input,select').forEach(inp=>{
+    inp.addEventListener('change', (e)=>{
+      const i = parseInt(e.target.getAttribute('data-i'));
+      const f = e.target.getAttribute('data-f');
+      s.activities[i][f] = e.target.value;
+      persist();
+    });
+  });
+  tbody.querySelectorAll('.del-btn').forEach(btn=>{
+    btn.addEventListener('click', (e)=>{
+      s.activities.splice(parseInt(e.target.getAttribute('data-i')),1);
+      renderActivities();
+      persist();
+    });
+  });
+}
+
+function renderLog(){
+  const m = MILESTONES.find(x=>x.id===currentId);
+  const s = getState(m);
+  const wrap = document.getElementById('logItems');
+  if(!wrap) return;
+  if(s.log.length===0){
+    wrap.innerHTML = `<div style="color:var(--ink-soft);font-size:12.5px;margin-bottom:10px;">No entries yet.</div>`;
+    return;
+  }
+  wrap.innerHTML = s.log.map(l=>`
+    <div class="log-entry">
+      <div class="lmeta"><span>${l.by}</span><span>${fmtDate(l.date)}</span></div>
+      <div>${l.entry}</div>
+      ${l.action ? `<div class="action">Action required: ${l.action}</div>` : ''}
+    </div>`).join('');
+}
+
+function renderEvidence(){
+  const m = MILESTONES.find(x=>x.id===currentId);
+  const s = getState(m);
+  const grid = document.getElementById('evidenceGrid');
+  if(!grid) return;
+  grid.innerHTML = s.evidence.map((ev,i)=>`
+    <div class="evidence-slot">
+      <div class="prev" id="evPrev${i}">${ev.url ? `<img src="${ev.url}" onerror="this.parentElement.textContent='Could not load image'">` : `Image ${i+1} placeholder`}</div>
+      <input type="text" data-i="${i}" data-f="url" placeholder="Image / evidence link" value="${ev.url||''}">
+      <input type="text" data-i="${i}" data-f="caption" placeholder="Caption / description" value="${ev.caption||''}">
+    </div>`).join('');
+  grid.querySelectorAll('input').forEach(inp=>{
+    inp.addEventListener('change', (e)=>{
+      const i = parseInt(e.target.getAttribute('data-i'));
+      const f = e.target.getAttribute('data-f');
+      s.evidence[i][f] = e.target.value;
+      if(f==='url') renderEvidence();
+      persist();
+    });
+  });
+}
+
+// ---------- Nav ----------
+function switchView(view){
+  currentView = view;
+  document.querySelectorAll('.rail-btn').forEach(b=>b.classList.toggle('active', b.getAttribute('data-view')===view));
+  document.getElementById('dashboardView').style.display = view==='dashboard' ? '' : 'none';
+  document.getElementById('milestonesView').style.display = view==='milestones' ? '' : 'none';
+  document.getElementById('detailView').style.display = view==='detail' ? '' : 'none';
+  if(view==='dashboard') renderDashboard();
+  if(view==='milestones') renderMilestonesView();
+  if(view==='detail') renderDetailView();
+  window.scrollTo(0,0);
+}
+
+document.querySelectorAll('.rail-btn').forEach(b=>{
+  b.addEventListener('click', ()=> switchView(b.getAttribute('data-view')));
+});
+
+(async function init(){
+  await loadOverrides();
+  renderDashboard();
+  startLiveSync();
+})();
+</script>
+</body>
+</html>
